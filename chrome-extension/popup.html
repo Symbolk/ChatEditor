@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ChatEditor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="pm-popup-container">
+    <h1>ChatEditor</h1>
+    
+    <div class="pm-model-selector">
+      <div class="pm-select-wrapper">
+        <select id="modelSelect">
+          <option value="deepseek">DeepSeek-Coder</option>
+          <option value="yi">Yi-lightning</option>
+          <option value="gpt4o">GPT-4o</option>
+          <option value="claude">Claude 3.5-Sonnet</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="apiKeySection">
+      <p class="api-status" id="apiStatus"></p>
+      <div class="api-input-group">
+        <input type="password" id="apiKeyInput" placeholder="输入API Key">
+        <button id="saveApiKey">保存API Key</button>
+      </div>
+    </div>
+
+    <button id="startEdit" class="gradient-button">开始选择区域</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 

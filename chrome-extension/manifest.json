@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "ChatEditor",
+  "version": "1.0",
+  "description": "指手画脚即可改这改那，享受产品经理的快乐吧！",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+      }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["modelAPI.js", "content.js"],
+      "css": ["styles.css"]
+    }
+  ]
+} 
