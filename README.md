@@ -46,9 +46,9 @@ ChatEditor 是一个 Chrome 扩展，让你能像产品经理一样，通过简�
 
 首次使用需要配置 AI 模型的 API Key：
 
-- 支持 DeepSeek（默认）
-- GPT-4
-- Claude
-- Yi
+- DeepSeek-Coder（默认）
+- GPT-4o
+- Claude 3.5 Sonnet
+- Yi-lightning
 
 在扩展的弹出窗口中完成配置即可开始使用。
