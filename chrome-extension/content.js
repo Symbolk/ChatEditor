@@ -73,6 +73,121 @@ function createHoverBox() {
   buttonGroup.className = 'hover-button-group';
   buttonGroup.style.display = 'flex';
   
+  const luckyBtn = document.createElement('button');
+  luckyBtn.textContent = '试试手气';
+  luckyBtn.style.cssText = `
+    background: linear-gradient(45deg, #7F7FD5, #86A8E7, #91EAE4);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  `;
+  
+  // 添加动画样式到文档
+  if (!document.querySelector('#lucky-button-style')) {
+    const style = document.createElement('style');
+    style.id = 'lucky-button-style';
+    style.textContent = `
+      @keyframes lucky-loading {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(0); }
+        100% { transform: translateX(100%); }
+      }
+      
+      .lucky-loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        animation: lucky-loading 1.5s infinite;
+      }
+      
+      .lucky-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(127, 127, 213, 0.4);
+        background: linear-gradient(45deg, #8989D9, #90B1EA, #9BEDE7);
+      }
+      
+      .lucky-button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(127, 127, 213, 0.2);
+      }
+      
+      .lucky-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // 用于存储上一次生成的建议
+  let lastSuggestion = '';
+  
+  luckyBtn.className = 'lucky-button';
+  luckyBtn.onclick = async () => {
+    try {
+      // 添加加载动画
+      luckyBtn.classList.add('lucky-loading');
+      luckyBtn.disabled = true;
+      
+      const elementInfo = getElementInfo(currentElement);
+      const prompt = `作为一个网页编辑助手，请根据以下元素信息生成一个合理的修改建议：
+当前元素类型: ${elementInfo}
+${lastSuggestion ? `上次生成的建议是: ${lastSuggestion}
+请生成一个不同的建议。` : ''}
+请生成一个简短的修改建议，例如"把背景色改成浅蓝色"或"将文字大小调整为18px"等。
+要求：
+1. 建议要简短具体
+2. 建议要可行且合理
+3. 只返回建议内容，不需要其他解释
+${lastSuggestion ? '4. 必须与上次建议不同' : ''}`;
+
+      const modelInfo = await chrome.storage.local.get(['selectedModel', 'gpt4oKey', 'claudeKey', 'deepseekKey', 'yiKey']);
+      const currentModel = modelInfo.selectedModel || 'deepseek';
+      const apiKey = modelInfo[`${currentModel}Key`];
+
+      if (!apiKey) {
+        throw new Error('未找到API Key，请先配置');
+      }
+
+      const modelAPI = new window.ModelAPI(currentModel, apiKey);
+      const suggestion = await modelAPI.generateCode(prompt);
+
+      if (!suggestion) {
+        throw new Error('生成建议失败');
+      }
+
+      // 保存这次生成的建议
+      lastSuggestion = suggestion.trim();
+      
+      const input = inputGroup.querySelector('input');
+      input.value = lastSuggestion;
+      input.focus();
+    } catch (error) {
+      console.error('生成建议失败:', error);
+      alert(`生成建议失败: ${error.message}`);
+    } finally {
+      // 移除加载动画
+      luckyBtn.classList.remove('lucky-loading');
+      luckyBtn.disabled = false;
+    }
+  };
+  buttonGroup.appendChild(luckyBtn);
+  
   const confirmBtn = document.createElement('button');
   confirmBtn.textContent = '确认';
   confirmBtn.onclick = () => handleEdit(input.value);
