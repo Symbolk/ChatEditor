@@ -173,7 +173,7 @@ ${lastSuggestion ? `上次生成的建议是: ${lastSuggestion}
 请生成一个简短的修改建议，例如"把背景色改成浅蓝色"或"将文字大小调整为18px"等。
 要求：
 1. 建议要简短具体
-2. ��议要可行且合理
+2. 建议要可行且合理
 3. 只返回建议内容，不需要其他解释
 ${lastSuggestion ? '4. 必须与上次建议不同' : ''}`;
 
@@ -494,7 +494,7 @@ function getElementInfo(element) {
     const id = element.id;
     
     if (className.toLowerCase().includes('header')) return '页面头部';
-    if (className.toLowerCase().includes('footer')) return '页���底部';
+    if (className.toLowerCase().includes('footer')) return '页面底部';
     if (className.toLowerCase().includes('nav')) return '导航区域';
     if (className.toLowerCase().includes('sidebar')) return '侧边栏';
     if (className.toLowerCase().includes('content')) return '内容区域';
@@ -572,6 +572,12 @@ async function handleEdit(requirement) {
   const input = inputGroup.querySelector('input');
   
   try {
+    // 创建新的 AbortController
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+    
     // 显示加载状态
     const loadingText = document.createElement('div');
     loadingText.className = 'hover-loading-text';
@@ -663,10 +669,12 @@ async function handleEdit(requirement) {
 6. 保持原有的事件监听器和功能
 `;
 
-    // 获取当前选择的模型和API Key
-    const modelInfo = await chrome.storage.local.get(['selectedModel', 'gpt4oKey', 'claudeKey', 'deepseekKey', 'yiKey']);
-    const currentModel = modelInfo.selectedModel || 'deepseek';
-    const apiKey = modelInfo[`${currentModel}Key`];
+    if (!modelConfig) {
+      throw new Error('未找到模型配置，请重新打开扩展');
+    }
+
+    const currentModel = modelConfig.selectedModel || 'deepseek';
+    const apiKey = modelConfig[`${currentModel}Key`];
 
     if (!apiKey) {
       throw new Error('未找到API Key，请先配置');
@@ -674,7 +682,12 @@ async function handleEdit(requirement) {
 
     // 使用 window.ModelAPI 替代 ModelAPI
     const modelAPI = new window.ModelAPI(currentModel, apiKey);
-    const generatedCode = await modelAPI.generateCode(prompt);
+    const generatedCode = await modelAPI.generateCode(prompt, currentAbortController.signal);
+
+    // 如果请求已被取消，直接返回
+    if (currentAbortController === null) {
+      return;
+    }
 
     if (!generatedCode) {
       throw new Error('生成失败');
@@ -736,6 +749,16 @@ async function handleEdit(requirement) {
     toggleInputMode(false);
     
   } catch (error) {
+    // 如果是取消请求导致的错误，不显示错误提示
+    if (error.name === 'AbortError') {
+      // 恢复输入框和按钮组
+      input.disabled = false;
+      if (inputGroup.querySelector('.hover-loading-text')) {
+        inputGroup.querySelector('.hover-loading-text').replaceWith(buttonGroup);
+      }
+      return;
+    }
+    
     console.error('修改失败:', error);
     
     // 恢复输入框和按钮组
