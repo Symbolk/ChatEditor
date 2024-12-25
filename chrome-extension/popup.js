@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       
       const currentKey = keys[keyMap[currentModel]];
-      console.log('当前模型:', currentModel, '是���有Key:', !!currentKey);
+      console.log('当前模型:', currentModel, '是否有Key:', !!currentKey);
       
       if (currentKey) {
         apiStatus.textContent = `API Key已保存: ${'*'.repeat(8)}`;

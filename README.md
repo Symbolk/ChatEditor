@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="chrome-extension/images/icon128.png" alt="ChatEditor Logo" width="128" height="128">
-  
+  <img src="screenshots/preview.gif" alt="Logo">
+
   # ChatEditor
   
   ### 指手画脚即可改这改那，享受产品经理的快乐吧！
@@ -18,7 +18,7 @@ ChatEditor 是一个 Chrome 扩展，让你能像产品经理一样，通过简�
 - ⚡ 实时预览修改效果
 - 🔄 支持多种 AI 模型
 
-## 使用截图
+## Screenshots
 
 <div align="center">
   <img src="screenshots/models.png" alt="选择元素" width="600">
