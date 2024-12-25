@@ -173,7 +173,7 @@ ${lastSuggestion ? `上次生成的建议是: ${lastSuggestion}
 请生成一个简短的修改建议，例如"把背景色改成浅蓝色"或"将文字大小调整为18px"等。
 要求：
 1. 建议要简短具体
-2. 建议要可行且合理
+2. ��议要可行且合理
 3. 只返回建议内容，不需要其他解释
 ${lastSuggestion ? '4. 必须与上次建议不同' : ''}`;
 
@@ -578,6 +578,9 @@ async function handleEdit(requirement) {
     }
     currentAbortController = new AbortController();
     
+    // 添加更新动画
+    highlightBorder.classList.add('updating');
+    
     // 显示加载状态
     const loadingText = document.createElement('div');
     loadingText.className = 'hover-loading-text';
@@ -664,7 +667,7 @@ async function handleEdit(requirement) {
 1. 保持原有的重要属性（class、id等）
 2. 确保代码可以直接使用
 3. 只返回HTML代码，不需要其他解释
-4. 如果需要添加样式，使用内联style属性
+4. 如果需要添加样式，���用内联style属性
 5. 确保代码符合用户需求
 6. 保持原有的事件监听器和功能
 `;
@@ -741,6 +744,9 @@ async function handleEdit(requirement) {
     oldElement.parentNode.replaceChild(clonedElement, oldElement);
     observer.disconnect();
 
+    // 移除更新动画
+    highlightBorder.classList.remove('updating');
+
     // 恢复输入框和按钮组
     input.disabled = false;
     loadingText.replaceWith(originalButtonGroup);
@@ -751,6 +757,8 @@ async function handleEdit(requirement) {
   } catch (error) {
     // 如果是取消请求导致的错误，不显示错误提示
     if (error.name === 'AbortError') {
+      // 移除更新动画
+      highlightBorder.classList.remove('updating');
       // 恢复输入框和按钮组
       input.disabled = false;
       if (inputGroup.querySelector('.hover-loading-text')) {
@@ -760,6 +768,9 @@ async function handleEdit(requirement) {
     }
     
     console.error('修改失败:', error);
+    
+    // 移除更新动画
+    highlightBorder.classList.remove('updating');
     
     // 恢复输入框和按钮组
     input.disabled = false;
