@@ -497,4 +497,12 @@
   50% {
     box-shadow: 0 0 30px rgba(123, 102, 255, 0.5);
   }
+}
+
+.header-icon {
+  position: absolute;
+  top: 15px;
+  right: 30px;
+  width: 48px;
+  height: 48px;
 } 

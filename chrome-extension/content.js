@@ -6,8 +6,17 @@ let editModal = null;
 let overlay = null;
 let highlightBorder = null;
 let tip = null;
+let currentAbortController = null;
+let modelConfig = null;
 
 // 监听来自popup的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'MODEL_CONFIG') {
+    modelConfig = message;
+    sendResponse({ success: true });
+  }
+});
+
 window.addEventListener('message', (event) => {
   if (event.data.type === 'PM_START_EDIT') {
     startEditing();
@@ -19,6 +28,10 @@ window.addEventListener('message', (event) => {
 // 添加Esc键监听
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && isEditing) {
+    if (currentAbortController) {
+      currentAbortController.abort();
+      currentAbortController = null;
+    }
     stopEditing();
   }
 });
@@ -140,6 +153,14 @@ function createHoverBox() {
   luckyBtn.className = 'lucky-button';
   luckyBtn.onclick = async () => {
     try {
+      // 如果有正在进行的请求，先取消它
+      if (currentAbortController) {
+        currentAbortController.abort();
+      }
+      
+      // 创建新的 AbortController
+      currentAbortController = new AbortController();
+      
       // 添加加载动画
       luckyBtn.classList.add('lucky-loading');
       luckyBtn.disabled = true;
@@ -152,23 +173,31 @@ ${lastSuggestion ? `上次生成的建议是: ${lastSuggestion}
 请生成一个简短的修改建议，例如"把背景色改成浅蓝色"或"将文字大小调整为18px"等。
 要求：
 1. 建议要简短具体
-2. 建议要可行且合理
+2. ��议要可行且合理
 3. 只返回建议内容，不需要其他解释
 ${lastSuggestion ? '4. 必须与上次建议不同' : ''}`;
 
-      const modelInfo = await chrome.storage.local.get(['selectedModel', 'gpt4oKey', 'claudeKey', 'deepseekKey', 'yiKey']);
-      const currentModel = modelInfo.selectedModel || 'deepseek';
-      const apiKey = modelInfo[`${currentModel}Key`];
+      if (!modelConfig) {
+        throw new Error('未找到模型配置，请重新打开扩展');
+      }
+
+      const currentModel = modelConfig.selectedModel || 'deepseek';
+      const apiKey = modelConfig[`${currentModel}Key`];
 
       if (!apiKey) {
         throw new Error('未找到API Key，请先配置');
       }
 
       const modelAPI = new window.ModelAPI(currentModel, apiKey);
-      const suggestion = await modelAPI.generateCode(prompt);
+      const suggestion = await modelAPI.generateCode(prompt, currentAbortController.signal);
 
       if (!suggestion) {
         throw new Error('生成建议失败');
+      }
+
+      // 如果请求已被取消，不更新输入框
+      if (currentAbortController === null) {
+        return;
       }
 
       // 保存这次生成的建议
@@ -178,9 +207,15 @@ ${lastSuggestion ? '4. 必须与上次建议不同' : ''}`;
       input.value = lastSuggestion;
       input.focus();
     } catch (error) {
+      // 如果是取消请求导致的错误，不显示错误提示
+      if (error.name === 'AbortError') {
+        return;
+      }
       console.error('生成建议失败:', error);
       alert(`生成建议失败: ${error.message}`);
     } finally {
+      // 清理 AbortController
+      currentAbortController = null;
       // 移除加载动画
       luckyBtn.classList.remove('lucky-loading');
       luckyBtn.disabled = false;
@@ -274,6 +309,12 @@ function startEditing() {
 }
 
 function stopEditing() {
+  // 如果有正在进行的请求，取消它
+  if (currentAbortController) {
+    currentAbortController.abort();
+    currentAbortController = null;
+  }
+  
   isEditing = false;
   isElementLocked = false;
   currentElement = null;
@@ -453,7 +494,7 @@ function getElementInfo(element) {
     const id = element.id;
     
     if (className.toLowerCase().includes('header')) return '页面头部';
-    if (className.toLowerCase().includes('footer')) return '页面底部';
+    if (className.toLowerCase().includes('footer')) return '页���底部';
     if (className.toLowerCase().includes('nav')) return '导航区域';
     if (className.toLowerCase().includes('sidebar')) return '侧边栏';
     if (className.toLowerCase().includes('content')) return '内容区域';

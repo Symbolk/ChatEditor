@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       
       const currentKey = keys[keyMap[currentModel]];
-      console.log('当前模型:', currentModel, '是否有Key:', !!currentKey);
+      console.log('当前模型:', currentModel, '是���有Key:', !!currentKey);
       
       if (currentKey) {
         apiStatus.textContent = `API Key已保存: ${'*'.repeat(8)}`;
@@ -132,10 +132,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      // 获取当前模型配置
+      const modelInfo = await chrome.storage.local.get(['selectedModel', 'gpt4oKey', 'claudeKey', 'deepseekKey', 'yiKey']);
+      
+      // 发送模型配置到content script
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'MODEL_CONFIG',
+        selectedModel: modelInfo.selectedModel || 'deepseek',
+        gpt4oKey: modelInfo.gpt4oKey,
+        claudeKey: modelInfo.claudeKey,
+        deepseekKey: modelInfo.deepseekKey,
+        yiKey: modelInfo.yiKey
+      });
+
+      // 执行编辑脚本
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         function: startEditing
       });
+      
       window.close();
     } catch (error) {
       console.error('开始编辑失败:', error);
